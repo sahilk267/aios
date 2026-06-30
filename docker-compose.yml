@@ -1,0 +1,282 @@
+version: "3.9"
+
+services:
+  aios-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: aios-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data/sqlite:/app/data/sqlite
+      - ./data/qdrant:/app/data/qdrant
+      - ./data/logs:/app/data/logs
+      - ./config:/app/config:ro
+    environment:
+      - AIOS_ENV=development
+      - AIOS_DB_PATH=/app/data/sqlite/aios.db
+      - AIOS_QDRANT_PATH=/app/data/qdrant
+      - AIOS_LOG_LEVEL=INFO
+      - AIOS_DEBUG=true
+      - AIOS_SECRET_KEY=${AIOS_SECRET_KEY:-dev-secret-key-change-in-production}
+      - AIOS_OLLAMA_URL=http://ollama:11434
+      - AIOS_REDIS_URL=redis://redis:6379/0
+      - AIOS_POSTGRES_URL=postgresql://aios:aios@postgres:5432/aios
+      - AIOS_OPENSEARCH_URL=http://opensearch:9200
+      - AIOS_LOKI_URL=http://loki:3100
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+    networks:
+      - aios-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: aios-postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=aios
+      - POSTGRES_PASSWORD=aios
+      - POSTGRES_DB=aios
+    networks:
+      - aios-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aios"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: aios-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - aios-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  qdrant:
+    image: qdrant/qdrant:v1.7.4
+    container_name: aios-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant-data:/qdrant/storage
+    networks:
+      - aios-network
+    restart: unless-stopped
+
+  neo4j:
+    image: neo4j:5.14-community
+    container_name: aios-neo4j
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j-data:/data
+      - neo4j-logs:/logs
+    environment:
+      - NEO4J_AUTH=neo4j/aios12345
+      - NEO4J_PLUGINS=["apoc", "graph-data-science"]
+    networks:
+      - aios-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:7474"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+
+  opensearch:
+    image: opensearchproject/opensearch:2.11.0
+    container_name: aios-opensearch
+    ports:
+      - "9200:9200"
+      - "9600:9600"
+    environment:
+      - discovery.type=single-node
+      - DISABLE_SECURITY_PLUGIN=true
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=aios12345
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    networks:
+      - aios-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: aios-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus:/etc/prometheus:ro
+      - prometheus-data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--web.enable-lifecycle"
+    networks:
+      - aios-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: aios-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=aios12345
+      - GF_USERS_ALLOW_SIGN_UP=false
+    depends_on:
+      - prometheus
+      - loki
+    networks:
+      - aios-network
+    restart: unless-stopped
+
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: aios-loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./config/loki:/etc/loki:ro
+      - loki-data:/loki
+    command: -config.file=/etc/loki/loki-config.yml
+    networks:
+      - aios-network
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:0.1.11
+    container_name: aios-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - aios-network
+    restart: unless-stopped
+
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: aios-litellm
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./config/litellm:/app/config:ro
+    environment:
+      - LITELLM_CONFIG_PATH=/app/config/litellm_config.yaml
+    networks:
+      - aios-network
+    restart: unless-stopped
+
+  n8n:
+    image: n8nio/n8n:1.18.0
+    container_name: aios-n8n
+    ports:
+      - "5678:5678"
+    volumes:
+      - n8n-data:/home/node/.n8n
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=aios12345
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678/
+    depends_on:
+      - postgres
+    networks:
+      - aios-network
+    restart: unless-stopped
+
+  gitea:
+    image: gitea/gitea:1.21.0
+    container_name: aios-gitea
+    ports:
+      - "3001:3000"
+      - "2222:22"
+    volumes:
+      - gitea-data:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+      - GITEA__database__DB_TYPE=postgres
+      - GITEA__database__HOST=postgres:5432
+      - GITEA__database__NAME=gitea
+      - GITEA__database__USER=gitea
+      - GITEA__database__PASSWD=gitea
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - aios-network
+    restart: unless-stopped
+
+networks:
+  aios-network:
+    driver: bridge
+    name: aios-network
+
+volumes:
+  postgres-data:
+    name: aios-postgres-data
+  redis-data:
+    name: aios-redis-data
+  qdrant-data:
+    name: aios-qdrant-data
+  neo4j-data:
+    name: aios-neo4j-data
+  neo4j-logs:
+    name: aios-neo4j-logs
+  opensearch-data:
+    name: aios-opensearch-data
+  prometheus-data:
+    name: aios-prometheus-data
+  grafana-data:
+    name: aios-grafana-data
+  loki-data:
+    name: aios-loki-data
+  ollama-data:
+    name: aios-ollama-data
+  n8n-data:
+    name: aios-n8n-data
+  gitea-data:
+    name: aios-gitea-data

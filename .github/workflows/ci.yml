@@ -1,0 +1,126 @@
+name: AIOS CI Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  lint:
+    name: Lint & Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          pip install ruff mypy bandit
+      
+      - name: Run Ruff linter
+        run: ruff check backend/aios/ backend/tests/
+      
+      - name: Run Ruff formatter check
+        run: ruff format --check backend/aios/ backend/tests/
+      
+      - name: Run Bandit security scan
+        run: bandit -r backend/aios/ -ll
+
+  type-check:
+    name: Type Checking
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          pip install -r backend/requirements.txt
+      
+      - name: Run MyPy
+        run: mypy backend/aios/ --ignore-missing-imports
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: aios
+          POSTGRES_PASSWORD: aios
+          POSTGRES_DB: aios
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          pip install -r backend/requirements.txt
+      
+      - name: Run unit tests
+        run: |
+          cd backend
+          python -m pytest tests/unit/ -v --cov=aios --cov-report=xml --cov-report=term
+      
+      - name: Run integration tests
+        env:
+          AIOS_POSTGRES_URL: postgresql://aios:aios@localhost:5432/aios
+          AIOS_REDIS_URL: redis://localhost:6379/0
+        run: |
+          cd backend
+          python -m pytest tests/integration/ -v --cov=aios --cov-append --cov-report=xml
+      
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          file: backend/coverage.xml
+          fail_ci_if_error: false
+
+  build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: [lint, type-check, test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Build Docker image
+        run: docker build -t aios:latest ./backend
+      
+      - name: Test Docker image
+        run: |
+          docker run --rm aios:latest python -c "import aios; print(aios.__version__)"
