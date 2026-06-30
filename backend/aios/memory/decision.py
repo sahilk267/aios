@@ -3,13 +3,14 @@
 Tracks decisions made by agents with rationale and outcomes.
 """
 
-import structlog
 import json
-import time
-import uuid
 import os
 import sqlite3
-from typing import Any, Dict, List, Optional
+import time
+import uuid
+from typing import Any
+
+import structlog
 
 logger = structlog.get_logger(__name__)
 
@@ -45,11 +46,11 @@ class DecisionStore:
         self,
         agent_id: str,
         decision_type: str,
-        context: Dict[str, Any],
+        context: dict[str, Any],
         rationale: str,
         agent_name: str = "",
         outcome: str = "",
-        success: Optional[bool] = None,
+        success: bool | None = None,
     ) -> str:
         """Record a decision."""
         decision_id = str(uuid.uuid4())
@@ -70,7 +71,7 @@ class DecisionStore:
 
         return decision_id
 
-    def get(self, decision_id: str) -> Optional[Dict[str, Any]]:
+    def get(self, decision_id: str) -> dict[str, Any] | None:
         """Get a decision by ID."""
         with sqlite3.connect(self._db_path) as conn:
             row = conn.execute(
@@ -80,7 +81,7 @@ class DecisionStore:
                 return self._row_to_dict(row)
         return None
 
-    def get_by_agent(self, agent_id: str, limit: int = 50) -> List[Dict[str, Any]]:
+    def get_by_agent(self, agent_id: str, limit: int = 50) -> list[dict[str, Any]]:
         """Get decisions by agent."""
         with sqlite3.connect(self._db_path) as conn:
             rows = conn.execute(
@@ -89,7 +90,7 @@ class DecisionStore:
             ).fetchall()
             return [self._row_to_dict(row) for row in rows]
 
-    def get_by_type(self, decision_type: str, limit: int = 50) -> List[Dict[str, Any]]:
+    def get_by_type(self, decision_type: str, limit: int = 50) -> list[dict[str, Any]]:
         """Get decisions by type."""
         with sqlite3.connect(self._db_path) as conn:
             rows = conn.execute(
@@ -98,7 +99,7 @@ class DecisionStore:
             ).fetchall()
             return [self._row_to_dict(row) for row in rows]
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get decision statistics."""
         with sqlite3.connect(self._db_path) as conn:
             total = conn.execute(
@@ -118,7 +119,7 @@ class DecisionStore:
             "success_rate": (successful / total * 100) if total > 0 else 0,
         }
 
-    def _row_to_dict(self, row) -> Dict[str, Any]:
+    def _row_to_dict(self, row) -> dict[str, Any]:
         """Convert a database row to dictionary."""
         return {
             "id": row[0],

@@ -1,9 +1,10 @@
 """AIOS Planner Agent - Task planning and decomposition."""
 
-import structlog
-from typing import Any, Dict, List
+from typing import Any
 
-from aios.agents.base import BaseAgent, AgentContext, AgentResult
+import structlog
+
+from aios.agents.base import AgentContext, AgentResult, BaseAgent
 from aios.agents.registry import AgentRegistry
 
 logger = structlog.get_logger(__name__)
@@ -13,11 +14,11 @@ logger = structlog.get_logger(__name__)
 @AgentRegistry.register
 class PlannerAgent(BaseAgent):
     """Agent responsible for planning and decomposing tasks.
-    
+
     The Planner agent analyzes requirements and breaks them down into
     actionable subtasks that can be executed by other agents.
     """
-    
+
     ROLE = "planner"
     DESCRIPTION = "Analyzes requirements and creates implementation plans"
     CAPABILITIES = [
@@ -26,44 +27,44 @@ class PlannerAgent(BaseAgent):
         "dependency_identification",
         "effort_estimation",
     ]
-    
+
     async def execute(self, context: AgentContext) -> AgentResult:
         """Execute planning task.
-        
+
         Analyzes the input requirements and produces a structured plan
         with subtasks, dependencies, and effort estimates.
         """
         self._logger.info("Planner starting", task_id=context.task_id)
-        
+
         try:
             query = context.input_data.get("query", "")
             if not query:
                 return AgentResult.failure("No query provided for planning")
-            
+
             # Create plan structure
             plan = self._create_plan(query, context)
-            
+
             # Add plan to context artifacts
             context.add_artifact("plan", plan)
             context.add_memory("plan", f"Created plan with {len(plan['tasks'])} tasks")
-            
+
             self._logger.info(
                 "Planner completed",
                 task_id=context.task_id,
                 tasks_count=len(plan["tasks"]),
             )
-            
+
             return AgentResult.success(
                 output=plan,
                 artifacts={"plan": plan},
                 metrics={"tasks_planned": len(plan["tasks"])},
             )
-            
+
         except Exception as e:
-            self._logger.error("Planner failed", error=str(e))
-            return AgentResult.failure(f"Planning failed: {str(e)}")
-    
-    def _create_plan(self, query: str, context: AgentContext) -> Dict[str, Any]:
+            self._logger.exception("Planner failed", error=str(e))
+            return AgentResult.failure(f"Planning failed: {e!s}")
+
+    def _create_plan(self, query: str, context: AgentContext) -> dict[str, Any]:
         """Create a structured plan from the query."""
         return {
             "query": query,

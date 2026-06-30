@@ -1,16 +1,15 @@
 """Tests for security utilities."""
 
-import pytest
 from aios.core.security import (
-    verify_password,
-    get_password_hash,
     create_access_token,
     decode_access_token,
-    generate_secret_key,
     generate_api_key,
+    generate_secret_key,
+    get_password_hash,
     hash_data,
-    secure_compare,
     sanitize_input,
+    secure_compare,
+    verify_password,
 )
 
 

@@ -1,9 +1,10 @@
 """AIOS Backend Engineer Agent - Backend implementation."""
 
-import structlog
-from typing import Any, Dict, List
+from typing import Any
 
-from aios.agents.base import BaseAgent, AgentContext, AgentResult
+import structlog
+
+from aios.agents.base import AgentContext, AgentResult, BaseAgent
 from aios.agents.registry import AgentRegistry
 
 logger = structlog.get_logger(__name__)
@@ -12,11 +13,11 @@ logger = structlog.get_logger(__name__)
 @AgentRegistry.register
 class BackendEngineerAgent(BaseAgent):
     """Agent responsible for backend implementation.
-    
+
     The Backend Engineer agent writes production-quality backend code
     following the architecture design and coding standards.
     """
-    
+
     ROLE = "backend_engineer"
     DESCRIPTION = "Implements backend services and APIs"
     CAPABILITIES = [
@@ -26,24 +27,24 @@ class BackendEngineerAgent(BaseAgent):
         "integration_implementation",
         "code_generation",
     ]
-    
+
     async def execute(self, context: AgentContext) -> AgentResult:
         """Execute backend implementation task."""
         self._logger.info("Backend Engineer starting", task_id=context.task_id)
-        
+
         try:
             query = context.input_data.get("query", "")
             architecture = context.input_data.get("architecture", {})
-            
+
             if not query:
                 return AgentResult.failure("No query provided for implementation")
-            
+
             # Generate implementation
             implementation = self._generate_implementation(query, architecture, context)
-            
+
             context.add_artifact("implementation", implementation)
             context.add_memory("implementation", "Generated backend implementation")
-            
+
             return AgentResult.success(
                 output=implementation,
                 artifacts={"implementation": implementation},
@@ -52,14 +53,14 @@ class BackendEngineerAgent(BaseAgent):
                     "total_lines": implementation["total_lines"],
                 },
             )
-            
+
         except Exception as e:
-            self._logger.error("Backend Engineer failed", error=str(e))
-            return AgentResult.failure(f"Implementation failed: {str(e)}")
-    
+            self._logger.exception("Backend Engineer failed", error=str(e))
+            return AgentResult.failure(f"Implementation failed: {e!s}")
+
     def _generate_implementation(
-        self, query: str, architecture: Dict, context: AgentContext
-    ) -> Dict[str, Any]:
+        self, query: str, architecture: dict, context: AgentContext
+    ) -> dict[str, Any]:
         """Generate backend implementation."""
         return {
             "query": query,

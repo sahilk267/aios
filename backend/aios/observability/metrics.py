@@ -1,8 +1,8 @@
 """AIOS Metrics Collection - Prometheus-compatible metrics."""
 
+from typing import Any
+
 import structlog
-import time
-from typing import Any, Dict, List, Optional
 
 logger = structlog.get_logger(__name__)
 
@@ -11,22 +11,22 @@ class MetricsCollector:
     """Collects and exposes system metrics."""
 
     def __init__(self):
-        self._counters: Dict[str, int] = {}
-        self._gauges: Dict[str, float] = {}
-        self._histograms: Dict[str, List[float]] = {}
+        self._counters: dict[str, int] = {}
+        self._gauges: dict[str, float] = {}
+        self._histograms: dict[str, list[float]] = {}
         self._logger = structlog.get_logger("aios.observability.metrics")
 
-    def increment(self, name: str, value: int = 1, labels: Optional[Dict[str, str]] = None) -> None:
+    def increment(self, name: str, value: int = 1, labels: dict[str, str] | None = None) -> None:
         """Increment a counter metric."""
         key = self._format_key(name, labels)
         self._counters[key] = self._counters.get(key, 0) + value
 
-    def gauge(self, name: str, value: float, labels: Optional[Dict[str, str]] = None) -> None:
+    def gauge(self, name: str, value: float, labels: dict[str, str] | None = None) -> None:
         """Set a gauge metric."""
         key = self._format_key(name, labels)
         self._gauges[key] = value
 
-    def histogram(self, name: str, value: float, labels: Optional[Dict[str, str]] = None) -> None:
+    def histogram(self, name: str, value: float, labels: dict[str, str] | None = None) -> None:
         """Record a histogram observation."""
         key = self._format_key(name, labels)
         if key not in self._histograms:
@@ -35,7 +35,7 @@ class MetricsCollector:
 
     def get_prometheus_format(self) -> str:
         """Export metrics in Prometheus format."""
-        lines: List[str] = []
+        lines: list[str] = []
 
         for key, value in self._counters.items():
             lines.append(f"{key} {value}")
@@ -51,7 +51,7 @@ class MetricsCollector:
 
         return "\n".join(lines)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get all metrics as dictionary."""
         return {
             "counters": dict(self._counters),
@@ -59,7 +59,7 @@ class MetricsCollector:
             "histograms": {k: {"count": len(v), "sum": sum(v)} for k, v in self._histograms.items()},
         }
 
-    def _format_key(self, name: str, labels: Optional[Dict[str, str]] = None) -> str:
+    def _format_key(self, name: str, labels: dict[str, str] | None = None) -> str:
         """Format metric key with labels."""
         if labels:
             label_str = ",".join(f'{k}="{v}"' for k, v in labels.items())

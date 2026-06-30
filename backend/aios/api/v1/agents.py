@@ -1,7 +1,7 @@
 """AIOS Agent Endpoints."""
 
+
 import structlog
-from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query
 
 from aios.schemas.agent import AgentCreate, AgentResponse, AgentUpdate, TaskRequest, TaskResponse
@@ -15,12 +15,12 @@ _agents: dict = {}
 _tasks: dict = {}
 
 
-@router.get("", response_model=List[AgentResponse])
+@router.get("", response_model=list[AgentResponse])
 async def list_agents(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    role: Optional[str] = None,
-) -> List[AgentResponse]:
+    role: str | None = None,
+) -> list[AgentResponse]:
     """List all agents."""
     agents = list(_agents.values())
     if role:
@@ -121,8 +121,8 @@ async def execute_agent_task(agent_id: str, task: TaskRequest) -> TaskResponse:
     return TaskResponse(**task_data)
 
 
-@router.get("/{agent_id}/tasks", response_model=List[TaskResponse])
-async def list_agent_tasks(agent_id: str) -> List[TaskResponse]:
+@router.get("/{agent_id}/tasks", response_model=list[TaskResponse])
+async def list_agent_tasks(agent_id: str) -> list[TaskResponse]:
     """List tasks for an agent."""
     tasks = [t for t in _tasks.values() if t["agent_id"] == agent_id]
     return [TaskResponse(**t) for t in tasks]

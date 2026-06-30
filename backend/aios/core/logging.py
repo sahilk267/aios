@@ -1,23 +1,24 @@
 """AIOS Structured Logging Configuration."""
 
-import sys
 import logging
+import sys
+from typing import Any
+
 import structlog
-from typing import Any, Dict
 
 from aios.core.config import settings
 
 
 def configure_logging() -> None:
     """Configure structured logging for AIOS."""
-    
+
     # Configure standard library logging
     logging.basicConfig(
         format="%(message)s",
         stream=sys.stdout,
         level=getattr(logging, settings.log_level.upper()),
     )
-    
+
     # Configure structlog
     shared_processors: list = [
         structlog.contextvars.merge_contextvars,
@@ -27,19 +28,14 @@ def configure_logging() -> None:
         structlog.processors.TimeStamper(fmt="iso"),
         structlog.processors.StackInfoRenderer(),
     ]
-    
+
     if settings.log_format == "json":
         # JSON format for production
-        processors = shared_processors + [
-            structlog.processors.format_exc_info,
-            structlog.processors.JSONRenderer(),
-        ]
+        processors = [*shared_processors, structlog.processors.format_exc_info, structlog.processors.JSONRenderer()]
     else:
         # Console format for development
-        processors = shared_processors + [
-            structlog.dev.ConsoleRenderer(colors=True),
-        ]
-    
+        processors = [*shared_processors, structlog.dev.ConsoleRenderer(colors=True)]
+
     structlog.configure(
         processors=processors,
         wrapper_class=structlog.stdlib.BoundLogger,
@@ -59,7 +55,7 @@ def log_request(
     path: str,
     status_code: int,
     duration_ms: float,
-    **extra: Dict[str, Any],
+    **extra: dict[str, Any],
 ) -> None:
     """Log an HTTP request."""
     logger = get_logger("aios.request")
@@ -76,7 +72,7 @@ def log_request(
 def log_error(
     error: Exception,
     context: str = "",
-    **extra: Dict[str, Any],
+    **extra: dict[str, Any],
 ) -> None:
     """Log an error with context."""
     logger = get_logger("aios.error")

@@ -1,12 +1,12 @@
 """AIOS System Endpoints."""
 
-import structlog
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 
-from fastapi import APIRouter, Depends
+import structlog
+from fastapi import APIRouter
 
-from aios.core.config import Settings, settings
+from aios.core.config import settings
 
 logger = structlog.get_logger(__name__)
 
@@ -14,7 +14,7 @@ router = APIRouter()
 
 
 @router.get("/health")
-async def health_check() -> Dict[str, Any]:
+async def health_check() -> dict[str, Any]:
     """Basic health check endpoint."""
     return {
         "status": "healthy",
@@ -25,10 +25,10 @@ async def health_check() -> Dict[str, Any]:
 
 
 @router.get("/health/detailed")
-async def detailed_health_check() -> Dict[str, Any]:
+async def detailed_health_check() -> dict[str, Any]:
     """Detailed health check with service status."""
-    services: Dict[str, Any] = {}
-    
+    services: dict[str, Any] = {}
+
     # Check database
     try:
         from aios.database.connection import check_db_health
@@ -36,7 +36,7 @@ async def detailed_health_check() -> Dict[str, Any]:
         services["database"] = {"status": "healthy" if db_healthy else "unhealthy"}
     except Exception as e:
         services["database"] = {"status": "unhealthy", "error": str(e)}
-    
+
     # Check vector store
     try:
         from aios.memory.vector import check_vector_store_health
@@ -44,7 +44,7 @@ async def detailed_health_check() -> Dict[str, Any]:
         services["vector_store"] = {"status": "healthy" if vector_healthy else "unhealthy"}
     except Exception as e:
         services["vector_store"] = {"status": "unhealthy", "error": str(e)}
-    
+
     # Check graph store
     try:
         from aios.memory.graph import check_graph_store_health
@@ -52,13 +52,13 @@ async def detailed_health_check() -> Dict[str, Any]:
         services["graph_store"] = {"status": "healthy" if graph_healthy else "unhealthy"}
     except Exception as e:
         services["graph_store"] = {"status": "unhealthy", "error": str(e)}
-    
+
     # Overall status
     all_healthy = all(
         s.get("status") == "healthy"
         for s in services.values()
     )
-    
+
     return {
         "status": "healthy" if all_healthy else "degraded",
         "timestamp": datetime.utcnow().isoformat(),
@@ -69,7 +69,7 @@ async def detailed_health_check() -> Dict[str, Any]:
 
 
 @router.get("/info")
-async def system_info() -> Dict[str, Any]:
+async def system_info() -> dict[str, Any]:
     """Get system information."""
     return {
         "name": settings.app_name,

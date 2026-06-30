@@ -4,13 +4,14 @@ This module defines the common interface that all AI providers must implement,
 ensuring consistent behavior across different model backends.
 """
 
-import structlog
-import time
 import uuid
 from abc import ABC, abstractmethod
+from collections.abc import AsyncGenerator
 from datetime import datetime
 from enum import Enum
-from typing import Any, AsyncGenerator, Dict, List, Optional
+from typing import Any
+
+import structlog
 
 logger = structlog.get_logger(__name__)
 
@@ -31,12 +32,12 @@ class ProviderConfig:
         self,
         name: str,
         base_url: str,
-        api_key: Optional[str] = None,
+        api_key: str | None = None,
         default_model: str = "llama3",
         max_tokens: int = 4096,
         temperature: float = 0.7,
         timeout: int = 120,
-        extra_headers: Optional[Dict[str, str]] = None,
+        extra_headers: dict[str, str] | None = None,
     ):
         self.name = name
         self.base_url = base_url
@@ -59,7 +60,7 @@ class ProviderResponse:
         completion_tokens: int = 0,
         total_tokens: int = 0,
         duration_ms: float = 0.0,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ):
         self.id = str(uuid.uuid4())
         self.content = content
@@ -71,7 +72,7 @@ class ProviderResponse:
         self.metadata = metadata or {}
         self.created_at = datetime.utcnow()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert response to dictionary."""
         return {
             "id": self.id,
@@ -110,10 +111,10 @@ class BaseProvider(ABC):
     async def generate(
         self,
         prompt: str,
-        model: Optional[str] = None,
-        max_tokens: Optional[int] = None,
-        temperature: Optional[float] = None,
-        system_prompt: Optional[str] = None,
+        model: str | None = None,
+        max_tokens: int | None = None,
+        temperature: float | None = None,
+        system_prompt: str | None = None,
         **kwargs: Any,
     ) -> ProviderResponse:
         """Generate a completion for the given prompt.
@@ -135,10 +136,10 @@ class BaseProvider(ABC):
     async def stream_generate(
         self,
         prompt: str,
-        model: Optional[str] = None,
-        max_tokens: Optional[int] = None,
-        temperature: Optional[float] = None,
-        system_prompt: Optional[str] = None,
+        model: str | None = None,
+        max_tokens: int | None = None,
+        temperature: float | None = None,
+        system_prompt: str | None = None,
         **kwargs: Any,
     ) -> AsyncGenerator[str, None]:
         """Stream a completion for the given prompt.
@@ -165,7 +166,7 @@ class BaseProvider(ABC):
         """
         ...
 
-    async def list_models(self) -> List[str]:
+    async def list_models(self) -> list[str]:
         """List available models from this provider.
 
         Returns:
@@ -173,7 +174,7 @@ class BaseProvider(ABC):
         """
         return [self.config.default_model]
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """Get provider metrics.
 
         Returns:

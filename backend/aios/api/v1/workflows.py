@@ -1,10 +1,10 @@
 """AIOS Workflow Endpoints."""
 
+
 import structlog
-from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query
 
-from aios.schemas.workflow import WorkflowCreate, WorkflowResponse, WorkflowUpdate, WorkflowExecute
+from aios.schemas.workflow import WorkflowCreate, WorkflowExecute, WorkflowResponse, WorkflowUpdate
 
 logger = structlog.get_logger(__name__)
 
@@ -15,12 +15,12 @@ _workflows: dict = {}
 _workflow_runs: dict = {}
 
 
-@router.get("", response_model=List[WorkflowResponse])
+@router.get("", response_model=list[WorkflowResponse])
 async def list_workflows(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    status: Optional[str] = None,
-) -> List[WorkflowResponse]:
+    status: str | None = None,
+) -> list[WorkflowResponse]:
     """List all workflows."""
     workflows = list(_workflows.values())
     if status:
@@ -119,7 +119,6 @@ async def execute_workflow(workflow_id: str, execute: WorkflowExecute) -> dict:
 
 
 @router.get("/{workflow_id}/runs")
-async def list_workflow_runs(workflow_id: str) -> List[dict]:
+async def list_workflow_runs(workflow_id: str) -> list[dict]:
     """List workflow runs."""
-    runs = [r for r in _workflow_runs.values() if r["workflow_id"] == workflow_id]
-    return runs
+    return [r for r in _workflow_runs.values() if r["workflow_id"] == workflow_id]

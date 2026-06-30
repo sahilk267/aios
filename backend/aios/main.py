@@ -1,14 +1,15 @@
 """AIOS FastAPI Application Entry Point."""
 
-import structlog
 from contextlib import asynccontextmanager
+
+import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from aios.core.config import settings
-from aios.core.events import create_start_app_handler, create_stop_app_handler
 from aios.api.v1.router import api_router
 from aios.api.websocket.router import ws_router
+from aios.core.config import settings
+from aios.core.events import create_start_app_handler, create_stop_app_handler
 
 logger = structlog.get_logger(__name__)
 
@@ -20,9 +21,9 @@ async def lifespan(app: FastAPI):
     logger.info("AIOS starting up", version="0.1.0", env=settings.environment)
     start_handler = await create_start_app_handler(app)
     await start_handler()
-    
+
     yield
-    
+
     # Shutdown
     logger.info("AIOS shutting down")
     stop_handler = await create_stop_app_handler(app)
@@ -40,7 +41,7 @@ def create_application() -> FastAPI:
         openapi_url="/openapi.json",
         lifespan=lifespan,
     )
-    
+
     # CORS middleware
     app.add_middleware(
         CORSMiddleware,
@@ -49,13 +50,13 @@ def create_application() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    
+
     # Include API routes
     app.include_router(api_router, prefix="/api/v1")
-    
+
     # Include WebSocket routes
     app.include_router(ws_router, prefix="/ws")
-    
+
     return app
 
 

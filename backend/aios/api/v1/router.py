@@ -2,7 +2,17 @@
 
 from fastapi import APIRouter
 
-from aios.api.v1 import system, projects, agents, workflows, memory, knowledge, plugins, providers, security
+from aios.api.v1 import (
+    agents,
+    knowledge,
+    memory,
+    plugins,
+    projects,
+    providers,
+    security,
+    system,
+    workflows,
+)
 
 api_router = APIRouter()
 

@@ -3,11 +3,12 @@
 This module provides integration with OpenRouter for accessing free AI models.
 """
 
-import structlog
 import time
-from typing import Any, AsyncGenerator, Dict, List, Optional
+from collections.abc import AsyncGenerator
+from typing import Any
 
 import httpx
+import structlog
 
 from aios.providers.base import (
     BaseProvider,
@@ -39,7 +40,7 @@ class OpenRouterProvider(BaseProvider):
     DEFAULT_MODEL = "google/gemma-2-9b-it:free"
     SUPPORTS_STREAMING = True
 
-    def __init__(self, config: Optional[ProviderConfig] = None):
+    def __init__(self, config: ProviderConfig | None = None):
         if config is None:
             config = ProviderConfig(
                 name="openrouter",
@@ -47,9 +48,9 @@ class OpenRouterProvider(BaseProvider):
                 default_model=self.DEFAULT_MODEL,
             )
         super().__init__(config)
-        self._client: Optional[httpx.AsyncClient] = None
+        self._client: httpx.AsyncClient | None = None
 
-    def _get_headers(self) -> Dict[str, str]:
+    def _get_headers(self) -> dict[str, str]:
         """Get request headers."""
         headers = {
             "Content-Type": "application/json",
@@ -72,10 +73,10 @@ class OpenRouterProvider(BaseProvider):
     async def generate(
         self,
         prompt: str,
-        model: Optional[str] = None,
-        max_tokens: Optional[int] = None,
-        temperature: Optional[float] = None,
-        system_prompt: Optional[str] = None,
+        model: str | None = None,
+        max_tokens: int | None = None,
+        temperature: float | None = None,
+        system_prompt: str | None = None,
         **kwargs: Any,
     ) -> ProviderResponse:
         """Generate a completion using OpenRouter."""
@@ -117,16 +118,16 @@ class OpenRouterProvider(BaseProvider):
             )
         except httpx.HTTPError as e:
             self.status = ProviderStatus.ERROR
-            self._logger.error("OpenRouter request failed", error=str(e))
+            self._logger.exception("OpenRouter request failed", error=str(e))
             raise
 
     async def stream_generate(
         self,
         prompt: str,
-        model: Optional[str] = None,
-        max_tokens: Optional[int] = None,
-        temperature: Optional[float] = None,
-        system_prompt: Optional[str] = None,
+        model: str | None = None,
+        max_tokens: int | None = None,
+        temperature: float | None = None,
+        system_prompt: str | None = None,
         **kwargs: Any,
     ) -> AsyncGenerator[str, None]:
         """Stream a completion using OpenRouter."""
@@ -168,7 +169,7 @@ class OpenRouterProvider(BaseProvider):
                             continue
         except httpx.HTTPError as e:
             self.status = ProviderStatus.ERROR
-            self._logger.error("OpenRouter stream failed", error=str(e))
+            self._logger.exception("OpenRouter stream failed", error=str(e))
             raise
 
     async def health_check(self) -> bool:
@@ -185,12 +186,12 @@ class OpenRouterProvider(BaseProvider):
         self.status = ProviderStatus.ERROR
         return False
 
-    async def list_models(self) -> List[str]:
+    async def list_models(self) -> list[str]:
         """List available free models."""
         return FREE_MODELS.copy()
 
     @staticmethod
-    def get_free_models() -> List[str]:
+    def get_free_models() -> list[str]:
         """Get list of free models.
 
         Returns:

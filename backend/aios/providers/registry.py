@@ -3,8 +3,9 @@
 This module manages AI provider registration, selection, and routing.
 """
 
+from typing import Any, Optional
+
 import structlog
-from typing import Any, Dict, List, Optional, Type
 
 from aios.providers.base import BaseProvider, ProviderConfig
 
@@ -19,8 +20,8 @@ class ProviderRegistry:
     """
 
     _instance: Optional["ProviderRegistry"] = None
-    _provider_classes: Dict[str, Type[BaseProvider]] = {}
-    _active_providers: Dict[str, BaseProvider] = {}
+    _provider_classes: dict[str, type[BaseProvider]] = {}
+    _active_providers: dict[str, BaseProvider] = {}
 
     def __new__(cls) -> "ProviderRegistry":
         """Singleton pattern."""
@@ -29,7 +30,7 @@ class ProviderRegistry:
         return cls._instance
 
     @classmethod
-    def register(cls, provider_class: Type[BaseProvider]) -> Type[BaseProvider]:
+    def register(cls, provider_class: type[BaseProvider]) -> type[BaseProvider]:
         """Register a provider class.
 
         Args:
@@ -74,7 +75,7 @@ class ProviderRegistry:
         return provider
 
     @classmethod
-    def get_provider(cls, name: str) -> Optional[BaseProvider]:
+    def get_provider(cls, name: str) -> BaseProvider | None:
         """Get an active provider by config name.
 
         Args:
@@ -86,7 +87,7 @@ class ProviderRegistry:
         return cls._active_providers.get(name)
 
     @classmethod
-    def list_providers(cls) -> List[Dict[str, Any]]:
+    def list_providers(cls) -> list[dict[str, Any]]:
         """List all registered providers.
 
         Returns:
@@ -103,7 +104,7 @@ class ProviderRegistry:
         ]
 
     @classmethod
-    def get_active_providers(cls) -> List[Dict[str, Any]]:
+    def get_active_providers(cls) -> list[dict[str, Any]]:
         """Get all active provider instances.
 
         Returns:
@@ -114,8 +115,8 @@ class ProviderRegistry:
     @classmethod
     async def get_healthy_provider(
         cls,
-        preferred: Optional[str] = None,
-    ) -> Optional[BaseProvider]:
+        preferred: str | None = None,
+    ) -> BaseProvider | None:
         """Get a healthy provider, optionally preferring a specific one.
 
         Args:

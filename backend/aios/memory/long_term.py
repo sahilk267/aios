@@ -3,12 +3,13 @@
 Persistent storage backed by SQLite for durable memory.
 """
 
-import structlog
 import json
-import time
 import os
 import sqlite3
-from typing import Any, Dict, List, Optional
+import time
+from typing import Any
+
+import structlog
 
 logger = structlog.get_logger(__name__)
 
@@ -66,7 +67,7 @@ class LongTermStore:
             conn.commit()
             return cursor.rowcount > 0
 
-    def keys(self, pattern: Optional[str] = None) -> List[str]:
+    def keys(self, pattern: str | None = None) -> list[str]:
         """Get all keys, optionally filtered by pattern."""
         with sqlite3.connect(self._db_path) as conn:
             if pattern:
@@ -80,7 +81,7 @@ class LongTermStore:
                 ).fetchall()
             return [row[0] for row in rows]
 
-    def search(self, query: str) -> List[Dict[str, Any]]:
+    def search(self, query: str) -> list[dict[str, Any]]:
         """Search for entries containing the query string."""
         with sqlite3.connect(self._db_path) as conn:
             rows = conn.execute(

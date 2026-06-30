@@ -1,7 +1,7 @@
 """AIOS WebSocket Router."""
 
+
 import structlog
-from typing import Dict, Set
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 logger = structlog.get_logger(__name__)
@@ -9,12 +9,12 @@ logger = structlog.get_logger(__name__)
 ws_router = APIRouter()
 
 # Connected WebSocket clients
-_connections: Dict[str, Set[WebSocket]] = {}
+_connections: dict[str, set[WebSocket]] = {}
 
 
 class ConnectionManager:
     """Manages WebSocket connections."""
-    
+
     async def connect(self, websocket: WebSocket, channel: str = "default"):
         """Accept a connection and add to channel."""
         await websocket.accept()
@@ -22,7 +22,7 @@ class ConnectionManager:
             _connections[channel] = set()
         _connections[channel].add(websocket)
         logger.info("WebSocket connected", channel=channel)
-    
+
     def disconnect(self, websocket: WebSocket, channel: str = "default"):
         """Remove a connection from channel."""
         if channel in _connections:
@@ -30,19 +30,19 @@ class ConnectionManager:
             if not _connections[channel]:
                 del _connections[channel]
         logger.info("WebSocket disconnected", channel=channel)
-    
+
     async def broadcast(self, message: dict, channel: str = "default"):
         """Broadcast a message to all connections in a channel."""
         if channel not in _connections:
             return
-        
+
         disconnected = set()
         for connection in _connections[channel]:
             try:
                 await connection.send_json(message)
             except Exception:
                 disconnected.add(connection)
-        
+
         # Clean up disconnected clients
         for conn in disconnected:
             self.disconnect(conn, channel)

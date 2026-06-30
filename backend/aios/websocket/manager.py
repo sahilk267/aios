@@ -4,12 +4,12 @@ Manages real-time WebSocket connections for agent status updates,
 workflow progress, and system events.
 """
 
-import structlog
 import json
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
+import structlog
 from fastapi import WebSocket
 
 logger = structlog.get_logger(__name__)
@@ -35,7 +35,7 @@ class WebSocketEvent:
     def __init__(
         self,
         event_type: EventType,
-        data: Dict[str, Any],
+        data: dict[str, Any],
         channel: str = "default",
     ):
         self.event_type = event_type
@@ -43,7 +43,7 @@ class WebSocketEvent:
         self.channel = channel
         self.timestamp = datetime.utcnow()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert event to dictionary."""
         return {
             "type": self.event_type.value,
@@ -61,15 +61,15 @@ class ConnectionManager:
     """Manages WebSocket connections and event broadcasting."""
 
     def __init__(self):
-        self._connections: Dict[str, Set[WebSocket]] = {}
-        self._client_channels: Dict[str, Set[str]] = {}
+        self._connections: dict[str, set[WebSocket]] = {}
+        self._client_channels: dict[str, set[str]] = {}
         self._logger = structlog.get_logger("aios.websocket.manager")
 
     async def connect(
         self,
         websocket: WebSocket,
         channel: str = "default",
-        client_id: Optional[str] = None,
+        client_id: str | None = None,
     ) -> str:
         """Accept a WebSocket connection and register it.
 
@@ -106,7 +106,7 @@ class ConnectionManager:
         self,
         websocket: WebSocket,
         channel: str = "default",
-        client_id: Optional[str] = None,
+        client_id: str | None = None,
     ) -> None:
         """Remove a WebSocket connection.
 
@@ -195,7 +195,7 @@ class ConnectionManager:
         """
         return len(self._connections.get(channel, set()))
 
-    def get_all_channels(self) -> List[str]:
+    def get_all_channels(self) -> list[str]:
         """Get list of all active channels.
 
         Returns:
@@ -213,7 +213,7 @@ async def broadcast_agent_status(
     agent_name: str,
     old_status: str,
     new_status: str,
-    task_id: Optional[str] = None,
+    task_id: str | None = None,
 ) -> int:
     """Broadcast agent status change event.
 

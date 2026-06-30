@@ -4,13 +4,14 @@ This module provides the workflow engine that executes directed acyclic
 graphs (DAGs) of tasks using the agent system.
 """
 
-import structlog
 import uuid
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from aios.agents.base import AgentContext, AgentResult, AgentStatus
+import structlog
+
+from aios.agents.base import AgentContext, AgentResult
 from aios.agents.registry import AgentRegistry
 
 logger = structlog.get_logger(__name__)
@@ -32,8 +33,8 @@ class Workflow:
         self,
         name: str,
         description: str = "",
-        tasks: Optional[List[Dict[str, Any]]] = None,
-        dependencies: Optional[Dict[str, List[str]]] = None,
+        tasks: list[dict[str, Any]] | None = None,
+        dependencies: dict[str, list[str]] | None = None,
     ):
         self.id = str(uuid.uuid4())
         self.name = name
@@ -42,12 +43,12 @@ class Workflow:
         self.dependencies = dependencies or {}
         self.status = WorkflowStatus.PENDING
         self.created_at = datetime.utcnow()
-        self.started_at: Optional[datetime] = None
-        self.completed_at: Optional[datetime] = None
-        self.results: Dict[str, AgentResult] = {}
-        self.errors: List[str] = []
+        self.started_at: datetime | None = None
+        self.completed_at: datetime | None = None
+        self.results: dict[str, AgentResult] = {}
+        self.errors: list[str] = []
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert workflow to dictionary."""
         return {
             "id": self.id,
@@ -71,7 +72,7 @@ class WorkflowEngine:
     """
 
     def __init__(self):
-        self._workflows: Dict[str, Workflow] = {}
+        self._workflows: dict[str, Workflow] = {}
         self._registry = AgentRegistry()
         self._logger = structlog.get_logger("aios.engine.workflow")
 
@@ -79,8 +80,8 @@ class WorkflowEngine:
         self,
         name: str,
         description: str = "",
-        tasks: Optional[List[Dict[str, Any]]] = None,
-        dependencies: Optional[Dict[str, List[str]]] = None,
+        tasks: list[dict[str, Any]] | None = None,
+        dependencies: dict[str, list[str]] | None = None,
     ) -> Workflow:
         """Create a new workflow.
 
@@ -103,7 +104,7 @@ class WorkflowEngine:
         self._logger.info("Workflow created", workflow_id=workflow.id, name=name)
         return workflow
 
-    def get_workflow(self, workflow_id: str) -> Optional[Workflow]:
+    def get_workflow(self, workflow_id: str) -> Workflow | None:
         """Get a workflow by ID.
 
         Args:
@@ -114,7 +115,7 @@ class WorkflowEngine:
         """
         return self._workflows.get(workflow_id)
 
-    def list_workflows(self) -> List[Dict[str, Any]]:
+    def list_workflows(self) -> list[dict[str, Any]]:
         """List all workflows.
 
         Returns:
@@ -125,7 +126,7 @@ class WorkflowEngine:
     async def execute_workflow(
         self,
         workflow_id: str,
-        input_data: Optional[Dict[str, Any]] = None,
+        input_data: dict[str, Any] | None = None,
     ) -> Workflow:
         """Execute a workflow.
 
@@ -174,7 +175,7 @@ class WorkflowEngine:
         except Exception as e:
             workflow.status = WorkflowStatus.FAILED
             workflow.errors.append(str(e))
-            self._logger.error("Workflow execution failed", error=str(e))
+            self._logger.exception("Workflow execution failed", error=str(e))
 
         workflow.completed_at = datetime.utcnow()
 
@@ -189,7 +190,7 @@ class WorkflowEngine:
     def _can_execute(
         self,
         task_id: str,
-        dependencies: Dict[str, List[str]],
+        dependencies: dict[str, list[str]],
         executed: set,
     ) -> bool:
         """Check if a task can be executed (all dependencies met).
@@ -207,8 +208,8 @@ class WorkflowEngine:
 
     async def _execute_task(
         self,
-        task_def: Dict[str, Any],
-        input_data: Dict[str, Any],
+        task_def: dict[str, Any],
+        input_data: dict[str, Any],
     ) -> AgentResult:
         """Execute a single task.
 

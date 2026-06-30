@@ -1,10 +1,11 @@
 """AIOS Plugin Manager - Plugin lifecycle management."""
 
-import structlog
 import importlib
 import importlib.util
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
+
+import structlog
 
 logger = structlog.get_logger(__name__)
 
@@ -29,7 +30,7 @@ class PluginManager:
         self[str, PluginInfo] = {}
         self._logger = structlog.get_logger("aios.plugins.manager")
 
-    def discover(self) -> List[PluginInfo]:
+    def discover(self) -> list[PluginInfo]:
         """Discover available plugins."""
         plugins = []
         if not self._plugin_dir.exists():
@@ -65,7 +66,7 @@ class PluginManager:
                 self._plugins[name].instance = module
                 return True
         except Exception as e:
-            self._logger.error("Failed to load plugin", name=name, error=str(e))
+            self._logger.exception("Failed to load plugin", name=name, error=str(e))
         return False
 
     def unload(self, name: str) -> bool:
@@ -75,7 +76,7 @@ class PluginManager:
             return True
         return False
 
-    def get_loaded(self) -> List[PluginInfo]:
+    def get_loaded(self) -> list[PluginInfo]:
         """Get all loaded plugins."""
         return [p for p in self._plugins.values() if p.loaded]
 

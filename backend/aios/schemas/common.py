@@ -1,7 +1,8 @@
 """AIOS Common Schemas."""
 
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -15,7 +16,7 @@ class BaseResponse(BaseModel):
 class ErrorResponse(BaseModel):
     """Error response model."""
     error: str
-    details: Dict[str, Any] = Field(default_factory=dict)
+    details: dict[str, Any] = Field(default_factory=dict)
 
 
 class HealthResponse(BaseModel):

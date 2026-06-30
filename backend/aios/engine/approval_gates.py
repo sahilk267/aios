@@ -1,10 +1,12 @@
 """AIOS Approval Gates - Human-in-the-loop approval workflow."""
 
-import structlog
 import uuid
+from collections.abc import Callable
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
+
+import structlog
 
 logger = structlog.get_logger(__name__)
 
@@ -25,7 +27,7 @@ class ApprovalRequest:
         title: str,
         description: str,
         requester: str,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
         timeout_hours: int = 24,
     ):
         self.id = str(uuid.uuid4())
@@ -36,7 +38,7 @@ class ApprovalRequest:
         self.status = ApprovalStatus.PENDING
         self.created_at = datetime.utcnow()
         self.timeout_hours = timeout_hours
-        self.resolved_at: Optional[datetime] = None
+        self.resolved_at: datetime | None = None
         self.resolution = ""
 
     def approve(self, resolution: str = "") -> None:
@@ -58,7 +60,7 @@ class ApprovalRequest:
         elapsed = (datetime.utcnow_at).total_seconds()
         return elapsed > (self.timeout_hours * 3600)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "id": self.id,
@@ -76,8 +78,8 @@ class ApprovalGate:
     """Manages approval gates for workflow execution."""
 
     def __init__(self):
-        self._requests: Dict[str, ApprovalRequest] = {}
-        self._callbacks: Dict[str, Callable] = {}
+        self._requests: dict[str, ApprovalRequest] = {}
+        self._callbacks: dict[str, Callable] = {}
         self._logger = structlog.get_logger("aios.engine.approval")
 
     def create_request(
@@ -85,8 +87,8 @@ class ApprovalGate:
         title: str,
         description: str,
         requester: str,
-        callback: Optional[Callable] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        callback: Callable | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> ApprovalRequest:
         """Create a new approval request."""
         request = ApprovalRequest(
@@ -119,11 +121,11 @@ class ApprovalGate:
         self._execute_callback(request)
         return True
 
-    def get_request(self, request_id: str) -> Optional[ApprovalRequest]:
+    def get_request(self, request_id: str) -> ApprovalRequest | None:
         """Get a request by ID."""
         return self._requests.get(request_id)
 
-    def get_pending(self) -> List[ApprovalRequest]:
+    def get_pending(self) -> list[ApprovalRequest]:
         """Get all pending requests."""
         return [r for r in self._requests.values() if r.status == ApprovalStatus.PENDING]
 
@@ -134,7 +136,7 @@ class ApprovalGate:
             try:
                 callback(request)
             except Exception as e:
-                self._logger.error("Callback error", error=str(e))
+                self._logger.exception("Callback error", error=str(e))
 
 
 # Global instance

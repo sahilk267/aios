@@ -1,7 +1,7 @@
 """AIOS Configuration Management."""
 
 from functools import lru_cache
-from typing import List, Optional, Union
+
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -25,7 +25,7 @@ class Settings(BaseSettings):
 
     @field_validator("debug", mode="before")
     @classmethod
-    def parse_debug(cls, v: Union[bool, str, int, None]) -> bool:
+    def parse_debug(cls, v: bool | str | int | None) -> bool:
         """Parse debug value from various types."""
         if isinstance(v, bool):
             return v
@@ -40,37 +40,37 @@ class Settings(BaseSettings):
     port: int = 8000
 
     # CORS
-    cors_origins: List[str] = ["http://localhost:3000", "http://localhost:5173"]
+    cors_origins: list[str] = ["http://localhost:3000", "http://localhost:5173"]
 
     # Database
     db_path: str = "data/sqlite/aios.db"
-    postgres_url: Optional[str] = None
+    postgres_url: str | None = None
 
     # Redis
-    redis_url: Optional[str] = None
+    redis_url: str | None = None
 
     # Qdrant
     qdrant_path: str = "data/qdrant"
-    qdrant_url: Optional[str] = None
+    qdrant_url: str | None = None
 
     # Neo4j
-    neo4j_url: Optional[str] = None
+    neo4j_url: str | None = None
     neo4j_user: str = "neo4j"
     neo4j_password: str = "aios12345"
 
     # OpenSearch
-    opensearch_url: Optional[str] = None
+    opensearch_url: str | None = None
 
     # Ollama
     ollama_url: str = "http://localhost:11434"
     ollama_model: str = "llama3"
 
     # OpenRouter
-    openrouter_api_key: Optional[str] = None
+    openrouter_api_key: str | None = None
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
 
     # LiteLLM
-    litellm_url: Optional[str] = None
+    litellm_url: str | None = None
 
     # Logging
     log_level: str = "INFO"
@@ -98,7 +98,7 @@ class Settings(BaseSettings):
         return self.environment == "production"
 
 
-@lru_cache()
+@lru_cache
 def get_settings() -> Settings:
     """Get cached settings instance."""
     return Settings()

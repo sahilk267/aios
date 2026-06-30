@@ -1,5 +1,5 @@
 """AIOS Observability Module."""
 
-from aios.observability.metrics import metrics_collector, MetricsCollector
+from aios.observability.metrics import MetricsCollector, metrics_collector
 
-__all__ = ["metrics_collector", "MetricsCollector"]
+__all__ = ["MetricsCollector", "metrics_collector"]

@@ -1,12 +1,13 @@
 """AIOS Audit Logging - Comprehensive action logging."""
 
-import structlog
 import json
-import time
-import uuid
 import os
 import sqlite3
-from typing import Any, Dict, List, Optional
+import time
+import uuid
+from typing import Any
+
+import structlog
 
 logger = structlog.get_logger(__name__)
 
@@ -41,7 +42,7 @@ class AuditLogger:
         action: str,
         user_id: str = "",
         resource: str = "",
-        details: Optional[Dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
         ip_address: str = "",
     ) -> str:
         """Log an action.
@@ -78,7 +79,7 @@ class AuditLogger:
         user_id: str = "",
         resource: str = "",
         limit: int = 100,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Query audit log entries.
 
         Args:

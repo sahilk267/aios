@@ -1,10 +1,10 @@
 """AIOS Knowledge Endpoints."""
 
+
 import structlog
-from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query
 
-from aios.schemas.knowledge import KnowledgeSearch, KnowledgeIndex, KnowledgeResponse
+from aios.schemas.knowledge import KnowledgeIndex, KnowledgeResponse
 
 logger = structlog.get_logger(__name__)
 
@@ -14,12 +14,12 @@ router = APIRouter()
 _knowledge_entries: dict = {}
 
 
-@router.get("/search", response_model=List[KnowledgeResponse])
+@router.get("/search", response_model=list[KnowledgeResponse])
 async def search_knowledge(
     query: str = Query(..., min_length=1),
     limit: int = Query(10, ge=1, le=100),
-    source: Optional[str] = None,
-) -> List[KnowledgeResponse]:
+    source: str | None = None,
+) -> list[KnowledgeResponse]:
     """Search knowledge base with semantic search."""
     results = []
     for entry in _knowledge_entries.values():
@@ -37,7 +37,7 @@ async def index_document(doc: KnowledgeIndex) -> KnowledgeResponse:
     """Index a document into the knowledge base."""
     import uuid
     from datetime import datetime
-    
+
     doc_id = str(uuid.uuid4())
     doc_data = {
         "id": doc_id,

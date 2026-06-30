@@ -1,9 +1,10 @@
 """AIOS QA Engineer Agent - Testing and quality assurance."""
 
-import structlog
-from typing import Any, Dict, List
+from typing import Any
 
-from aios.agents.base import BaseAgent, AgentContext, AgentResult
+import structlog
+
+from aios.agents.base import AgentContext, AgentResult, BaseAgent
 from aios.agents.registry import AgentRegistry
 
 logger = structlog.get_logger(__name__)
@@ -12,11 +13,11 @@ logger = structlog.get_logger(__name__)
 @AgentRegistry.register
 class QAEngineerAgent(BaseAgent):
     """Agent responsible for testing and quality assurance.
-    
+
     The QA Engineer agent creates test plans, writes test cases,
     and validates implementations against requirements.
     """
-    
+
     ROLE = "qa"
     DESCRIPTION = "Creates tests and validates implementations"
     CAPABILITIES = [
@@ -26,24 +27,24 @@ class QAEngineerAgent(BaseAgent):
         "integration_testing",
         "test_automation",
     ]
-    
+
     async def execute(self, context: AgentContext) -> AgentResult:
         """Execute QA task."""
         self._logger.info("QA Engineer starting", task_id=context.task_id)
-        
+
         try:
             query = context.input_data.get("query", "")
             implementation = context.input_data.get("implementation", {})
-            
+
             if not query:
                 return AgentResult.failure("No query provided for QA")
-            
+
             # Create test plan
             test_plan = self._create_test_plan(query, implementation, context)
-            
+
             context.add_artifact("test_plan", test_plan)
             context.add_memory("qa", f"Created test plan with {len(test_plan['test_cases'])} test cases")
-            
+
             return AgentResult.success(
                 output=test_plan,
                 artifacts={"test_plan": test_plan},
@@ -52,14 +53,14 @@ class QAEngineerAgent(BaseAgent):
                     "coverage_target": test_plan["coverage_target"],
                 },
             )
-            
+
         except Exception as e:
-            self._logger.error("QA Engineer failed", error=str(e))
-            return AgentResult.failure(f"QA failed: {str(e)}")
-    
+            self._logger.exception("QA Engineer failed", error=str(e))
+            return AgentResult.failure(f"QA failed: {e!s}")
+
     def _create_test_plan(
-        self, query: str, implementation: Dict, context: AgentContext
-    ) -> Dict[str, Any]:
+        self, query: str, implementation: dict, context: AgentContext
+    ) -> dict[str, Any]:
         """Create test plan from query and implementation."""
         return {
             "query": query,

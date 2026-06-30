@@ -1,5 +1,5 @@
 """AIOS Plugins Module."""
 
-from aios.plugins.manager import plugin_manager, PluginManager, PluginInfo
+from aios.plugins.manager import PluginInfo, PluginManager, plugin_manager
 
-__all__ = ["plugin_manager", "PluginManager", "PluginInfo"]
+__all__ = ["PluginInfo", "PluginManager", "plugin_manager"]

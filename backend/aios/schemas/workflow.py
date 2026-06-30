@@ -1,6 +1,7 @@
 """AIOS Workflow Schemas."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -9,29 +10,28 @@ class TaskDefinition(BaseModel):
     id: str
     type: str
     agent_role: str
-    input: Dict[str, Any] = Field(default_factory=dict)
-    depends_on: List[str] = Field(default_factory=list)
+    input: dict[str, Any] = Field(default_factory=dict)
+    depends_on: list[str] = Field(default_factory=list)
 
 
 class WorkflowBase(BaseModel):
     """Base workflow schema."""
     name: str = Field(..., min_length=1, max_length=255)
-    description: Optional[str] = None
-    tasks: List[TaskDefinition] = Field(default_factory=list)
-    dependencies: Dict[str, List[str]] = Field(default_factory=dict)
+    description: str | None = None
+    tasks: list[TaskDefinition] = Field(default_factory=list)
+    dependencies: dict[str, list[str]] = Field(default_factory=dict)
 
 
 class WorkflowCreate(WorkflowBase):
     """Workflow creation schema."""
-    pass
 
 
 class WorkflowUpdate(BaseModel):
     """Workflow update schema."""
-    name: Optional[str] = Field(None, min_length=1, max_length=255)
-    description: Optional[str] = None
-    tasks: Optional[List[TaskDefinition]] = None
-    dependencies: Optional[Dict[str, List[str]]] = None
+    name: str | None = Field(None, min_length=1, max_length=255)
+    description: str | None = None
+    tasks: list[TaskDefinition] | None = None
+    dependencies: dict[str, list[str]] | None = None
 
 
 class WorkflowResponse(WorkflowBase):
@@ -47,4 +47,4 @@ class WorkflowResponse(WorkflowBase):
 
 class WorkflowExecute(BaseModel):
     """Workflow execution schema."""
-    input: Dict[str, Any] = Field(default_factory=dict)
+    input: dict[str, Any] = Field(default_factory=dict)

@@ -1,8 +1,8 @@
 """AIOS Security Endpoints."""
 
+
 import structlog
-from typing import List, Optional
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Query
 
 logger = structlog.get_logger(__name__)
 
@@ -17,9 +17,9 @@ _users: dict = {}
 async def list_audit_logs(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    action: Optional[str] = None,
-    user_id: Optional[str] = None,
-) -> List[dict]:
+    action: str | None = None,
+    user_id: str | None = None,
+) -> list[dict]:
     """List audit logs."""
     logs = list(_audit_logs.values())
     if action:
@@ -34,7 +34,7 @@ async def create_audit_log(log_entry: dict) -> dict:
     """Create an audit log entry."""
     import uuid
     from datetime import datetime
-    
+
     log_id = str(uuid.uuid4())
     log_data = {
         "id": log_id,
@@ -50,7 +50,7 @@ async def create_audit_log(log_entry: dict) -> dict:
 
 
 @router.get("/users")
-async def list_users() -> List[dict]:
+async def list_users() -> list[dict]:
     """List all users."""
     return list(_users.values())
 
@@ -60,9 +60,9 @@ async def create_user(user: dict) -> dict:
     """Create a new user."""
     import uuid
     from datetime import datetime
-    
+
     from aios.core.security import get_password_hash
-    
+
     user_id = str(uuid.uuid4())
     user_data = {
         "id": user_id,

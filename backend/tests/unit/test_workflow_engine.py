@@ -1,9 +1,10 @@
 """Tests for workflow engine."""
 
 import pytest
+
 from aios.engine.workflow_engine import (
-    WorkflowEngine,
     Workflow,
+    WorkflowEngine,
     WorkflowStatus,
 )
 

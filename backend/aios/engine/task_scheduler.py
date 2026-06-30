@@ -3,11 +3,13 @@
 This module provides task scheduling capabilities for the workflow engine.
 """
 
-import structlog
 import uuid
+from collections.abc import Callable
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
+
+import structlog
 
 logger = structlog.get_logger(__name__)
 
@@ -24,15 +26,15 @@ class TaskStatus(Enum):
 
 class Task:
     """Represents a schedulable task."""
-    
+
     def __init__(
         self,
         name: str,
         func: Callable,
-        args: Optional[tuple] = None,
-        kwargs: Optional[Dict[str, Any]] = None,
+        args: tuple | None = None,
+        kwargs: dict[str, Any] | None = None,
         priority: int = 0,
-        timeout: Optional[int] = None,
+        timeout: int | None = None,
     ):
         self.id = str(uuid.uuid4())
         self.name = name
@@ -43,12 +45,12 @@ class Task:
         self.timeout = timeout
         self.status = TaskStatus.PENDING
         self.result: Any = None
-        self.error: Optional[str] = None
+        self.error: str | None = None
         self.created_at = datetime.utcnow()
-        self.started_at: Optional[datetime] = None
-        self.completed_at: Optional[datetime] = None
-    
-    def to_dict(self) -> Dict[str, Any]:
+        self.started_at: datetime | None = None
+        self.completed_at: datetime | None = None
+
+    def to_dict(self) -> dict[str, Any]:
         """Convert task to dictionary."""
         return {
             "id": self.id,
@@ -64,34 +66,34 @@ class Task:
 
 class TaskScheduler:
     """Schedules and executes async tasks.
-    
+
     Manages task queue, concurrency, and execution lifecycle.
     """
-    
+
     def __init__(self, max_concurrent: int = 5):
         self.max_concurrent = max_concurrent
-        self._queue: List[Task] = []
-        self._running: Dict[str, Task] = {}
-        self._completed: Dict[str, Task] = {}
+        self._queue: list[Task] = []
+        self._running: dict[str, Task] = {}
+        self._completed: dict[str, Task] = {}
         self._logger = structlog.get_logger("aios.engine.scheduler")
-    
+
     def schedule(
         self,
         name: str,
         func: Callable,
-        args: Optional[tuple] = None,
-        kwargs: Optional[Dict[str, Any]] = None,
+        args: tuple | None = None,
+        kwargs: dict[str, Any] | None = None,
         priority: int = 0,
     ) -> Task:
         """Schedule a task for execution.
-        
+
         Args:
             name: Task name.
             func: Async function to execute.
             args: Positional arguments.
             kwargs: Keyword arguments.
             priority: Task priority (higher = more important).
-            
+
         Returns:
             Scheduled Task instance.
         """
@@ -104,16 +106,16 @@ class TaskScheduler:
         )
         self._queue.append(task)
         self._queue.sort(key=lambda t: t.priority, reverse=True)
-        
+
         self._logger.info("Task scheduled", task_id=task.id, name=name)
         return task
-    
+
     async def run(self, task: Task) -> Task:
         """Run a task immediately.
-        
+
         Args:
             task: The task to run.
-            
+
         Returns:
             The task with results.
         """
@@ -121,11 +123,11 @@ class TaskScheduler:
             task.status = TaskStatus.QUEUED
             self._logger.info("Task queued", task_id=task.id)
             return task
-        
+
         task.status = TaskStatus.RUNNING
         task.started_at = datetime.utcnow()
         self._running[task.id] = task
-        
+
         try:
             import asyncio
             result = await asyncio.wait_for(
@@ -134,7 +136,7 @@ class TaskScheduler:
             )
             task.result = result
             task.status = TaskStatus.COMPLETED
-        except asyncio.TimeoutError:
+        except TimeoutError:
             task.error = "Task timed out"
             task.status = TaskStatus.FAILED
         except Exception as e:
@@ -144,33 +146,33 @@ class TaskScheduler:
             task.completed_at = datetime.utcnow()
             del self._running[task.id]
             self._completed[task.id] = task
-        
+
         return task
-    
-    async def run_all(self) -> List[Task]:
+
+    async def run_all(self) -> list[Task]:
         """Run all queued tasks.
-        
+
         Returns:
             List of completed tasks.
         """
         import asyncio
-        
+
         tasks = []
         while self._queue:
             task = self._queue.pop(0)
             tasks.append(self.run(task))
-        
+
         if tasks:
             await asyncio.gather(*tasks, return_exceptions=True)
-        
+
         return [self._completed.get(t.id, t) for t in tasks]
-    
-    def get_task(self, task_id: str) -> Optional[Task]:
+
+    def get_task(self, task_id: str) -> Task | None:
         """Get a task by ID.
-        
+
         Args:
             task_id: The task ID.
-            
+
         Returns:
             Task instance or None.
         """
@@ -182,10 +184,10 @@ class TaskScheduler:
             if task.id == task_id:
                 return task
         return None
-    
-    def get_stats(self) -> Dict[str, int]:
+
+    def get_stats(self) -> dict[str, int]:
         """Get scheduler statistics.
-        
+
         Returns:
             Dictionary with task counts.
         """

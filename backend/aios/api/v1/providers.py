@@ -1,8 +1,8 @@
 """AIOS Provider Endpoints."""
 
+
 import structlog
-from typing import List, Optional
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException
 
 logger = structlog.get_logger(__name__)
 
@@ -13,7 +13,7 @@ _providers: dict = {}
 
 
 @router.get("")
-async def list_providers() -> List[dict]:
+async def list_providers() -> list[dict]:
     """List all configured providers."""
     return list(_providers.values())
 
@@ -23,7 +23,7 @@ async def configure_provider(provider: dict) -> dict:
     """Configure a provider."""
     import uuid
     from datetime import datetime
-    
+
     provider_id = str(uuid.uuid4())
     provider_data = {
         "id": provider_id,
@@ -53,7 +53,7 @@ async def test_provider(provider_id: str) -> dict:
     """Test a provider connection."""
     if provider_id not in _providers:
         raise HTTPException(status_code=404, detail="Provider not found")
-    
+
     # Placeholder for actual provider test
     return {
         "provider_id": provider_id,

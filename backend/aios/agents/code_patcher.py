@@ -2,9 +2,10 @@
 
 import ast
 import difflib
-import structlog
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
+
+import structlog
 
 logger = structlog.get_logger(__name__)
 
@@ -28,7 +29,7 @@ class PatchResult:
         self.diff = diff
         self.error = error
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert result to dictionary."""
         return {
             "success": self.success,
@@ -45,7 +46,7 @@ class CodePatcher:
         self.project_root = project_root
         self._logger = structlog.get_logger("aios.code_patcher")
 
-    def validate_syntax(self, code: str) -> Tuple[bool, str]:
+    def validate_syntax(self, code: str) -> tuple[bool, str]:
         """Validate Python code syntax using AST."""
         try:
             ast.parse(code)
@@ -68,10 +69,7 @@ class CodePatcher:
     def apply_patch(self, file_path: Path, new_content: str) -> PatchResult:
         """Apply a patch to a file."""
         try:
-            if file_path.exists():
-                original = file_path.read_text()
-            else:
-                original = ""
+            original = file_path.read_text() if file_path.exists() else ""
 
             is_valid, error = self.validate_syntax(new_content)
             if not is_valid:
@@ -98,7 +96,7 @@ class CodePatcher:
             )
 
         except Exception as e:
-            self._logger.error("Patch failed", file=str(file_path), error=str(e))
+            self._logger.exception("Patch failed", file=str(file_path), error=str(e))
             return PatchResult(
                 success=False,
                 file_path=str(file_path),
@@ -111,7 +109,7 @@ class CodePatcher:
         self,
         file_path: Path,
         function_code: str,
-        after_function: Optional[str] = None,
+        after_function: str | None = None,
     ) -> PatchResult:
         """Insert a new function into a file."""
         try:
@@ -217,10 +215,7 @@ class CodePatcher:
     def add_import(self, file_path: Path, import_statement: str) -> PatchResult:
         """Add an import statement to a file."""
         try:
-            if file_path.exists():
-                content = file_path.read_text()
-            else:
-                content = ""
+            content = file_path.read_text() if file_path.exists() else ""
 
             if import_statement in content:
                 return PatchResult(
@@ -235,9 +230,9 @@ class CodePatcher:
             insert_idx = 0
 
             for i, line in enumerate(lines):
-                if line.startswith("import ") or line.startswith("from "):
+                if line.startswith(("import ", "from ")):
                     insert_idx = i + 1
-                elif line.startswith('"""') or line.startswith("'''"):
+                elif line.startswith(('"""', "'''")):
                     if i + 1 < len(lines) and lines[i + 1].strip() == "":
                         insert_idx = i + 2
                 elif line.strip() and not line.startswith("#"):

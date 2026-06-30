@@ -3,11 +3,12 @@
 This module provides integration with Ollama for running AI models locally.
 """
 
-import structlog
 import time
-from typing import Any, AsyncGenerator, Dict, List, Optional
+from collections.abc import AsyncGenerator
+from typing import Any
 
 import httpx
+import structlog
 
 from aios.providers.base import (
     BaseProvider,
@@ -21,16 +22,16 @@ logger = structlog.get_logger(__name__)
 
 class OllamaProvider(BaseProvider):
     """Provider for Ollama local AI models.
-    
+
     Supports any model available in your Ollama installation.
     No API key required - runs entirely locally.
     """
-    
+
     PROVIDER_NAME = "ollama"
     DEFAULT_MODEL = "llama3"
     SUPPORTS_STREAMING = True
-    
-    def __init__(self, config: Optional[ProviderConfig] = None):
+
+    def __init__(self, config: ProviderConfig | None = None):
         if config is None:
             config = ProviderConfig(
                 name="ollama-local",
@@ -38,8 +39,8 @@ class OllamaProvider(BaseProvider):
                 default_model="llama3",
             )
         super().__init__(config)
-        self._client: Optional[httpx.AsyncClient] = None
-    
+        self._client: httpx.AsyncClient | None = None
+
     async def _get_client(self) -> httpx.AsyncClient:
         """Get or create HTTP client."""
         if self._client is None or self._client.is_closed:
@@ -48,26 +49,26 @@ class OllamaProvider(BaseProvider):
                 timeout=self.config.timeout,
             )
         return self._client
-    
+
     async def generate(
         self,
         prompt: str,
-        model: Optional[str] = None,
-        max_tokens: Optional[int] = None,
-        temperature: Optional[float] = None,
-        system_prompt: Optional[str] = None,
+        model: str | None = None,
+        max_tokens: int | None = None,
+        temperature: float | None = None,
+        system_prompt: str | None = None,
         **kwargs: Any,
     ) -> ProviderResponse:
         """Generate a completion using Ollama."""
         client = await self._get_client()
         model = model or self.config.default_model
-        
+
         options = {
             "temperature": temperature or self.config.temperature,
         }
         if max_tokens:
             options["num_predict"] = max_tokens
-        
+
         payload = {
             "model": model,
             "prompt": prompt,
@@ -76,17 +77,17 @@ class OllamaProvider(BaseProvider):
         }
         if system_prompt:
             payload["system"] = system_prompt
-        
+
         self._logger.debug("Ollama generate request", model=model)
         start_time = time.time()
-        
+
         try:
             response = await client.post("/api/generate", json=payload)
             response.raise_for_status()
             data = response.json()
-            
+
             duration_ms = (time.time() - start_time) * 1000
-            
+
             return ProviderResponse(
                 content=data.get("response", ""),
                 model=model,
@@ -103,28 +104,28 @@ class OllamaProvider(BaseProvider):
             )
         except httpx.HTTPError as e:
             self.status = ProviderStatus.ERROR
-            self._logger.error("Ollama request failed", error=str(e))
+            self._logger.exception("Ollama request failed", error=str(e))
             raise
-    
+
     async def stream_generate(
         self,
         prompt: str,
-        model: Optional[str] = None,
-        max_tokens: Optional[int] = None,
-        temperature: Optional[float] = None,
-        system_prompt: Optional[str] = None,
+        model: str | None = None,
+        max_tokens: int | None = None,
+        temperature: float | None = None,
+        system_prompt: str | None = None,
         **kwargs: Any,
     ) -> AsyncGenerator[str, None]:
         """Stream a completion using Ollama."""
         client = await self._get_client()
         model = model or self.config.default_model
-        
+
         options = {
             "temperature": temperature or self.config.temperature,
         }
         if max_tokens:
             options["num_predict"] = max_tokens
-        
+
         payload = {
             "model": model,
             "prompt": prompt,
@@ -133,9 +134,9 @@ class OllamaProvider(BaseProvider):
         }
         if system_prompt:
             payload["system"] = system_prompt
-        
+
         self._logger.debug("Ollama stream request", model=model)
-        
+
         try:
             async with client.stream(
                 "POST", "/api/generate", json=payload
@@ -154,9 +155,9 @@ class OllamaProvider(BaseProvider):
                             continue
         except httpx.HTTPError as e:
             self.status = ProviderStatus.ERROR
-            self._logger.error("Ollama stream failed", error=str(e))
+            self._logger.exception("Ollama stream failed", error=str(e))
             raise
-    
+
     async def health_check(self) -> bool:
         """Check if Ollama is running."""
         try:
@@ -167,11 +168,11 @@ class OllamaProvider(BaseProvider):
                 return True
         except Exception:
             pass
-        
+
         self.status = ProviderStatus.ERROR
         return False
-    
-    async def list_models(self) -> List[str]:
+
+    async def list_models(self) -> list[str]:
         """List available Ollama models."""
         try:
             client = await self._get_client()
@@ -180,15 +181,15 @@ class OllamaProvider(BaseProvider):
             data = response.json()
             return [model["name"] for model in data.get("models", [])]
         except Exception as e:
-            self._logger.error("Failed to list models", error=str(e))
+            self._logger.exception("Failed to list models", error=str(e))
             return [self.config.default_model]
-    
+
     async def pull_model(self, model: str) -> bool:
         """Pull a model from Ollama library.
-        
+
         Args:
             model: Model name to pull.
-            
+
         Returns:
             True if successful.
         """
@@ -203,5 +204,5 @@ class OllamaProvider(BaseProvider):
             self._logger.info("Model pulled successfully", model=model)
             return True
         except Exception as e:
-            self._logger.error("Failed to pull model", model=model, error=str(e))
+            self._logger.exception("Failed to pull model", model=model, error=str(e))
             return False

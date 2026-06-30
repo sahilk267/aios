@@ -3,10 +3,11 @@
 Fast in-memory storage with TTL for temporary context.
 """
 
-import structlog
 import time
-from typing import Any, Dict, List, Optional
 from collections import OrderedDict
+from typing import Any
+
+import structlog
 
 logger = structlog.get_logger(__name__)
 
@@ -20,12 +21,12 @@ class ShortTermStore:
 
     def __init__(self, max_size: int = 1000, default_ttl: int = 300):
         self._store: OrderedDict[str, Any] = OrderedDict()
-        self._expiry: Dict[str, float] = {}
+        self._expiry: dict[str, float] = {}
         self._max_size = max_size
         self._default_ttl = default_ttl
         self._logger = structlog.get_logger("aios.memory.short_term")
 
-    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
+    def set(self, key: str, value: Any, ttl: int | None = None) -> None:
         """Store a value with optional TTL.
 
         Args:
@@ -78,7 +79,7 @@ class ShortTermStore:
         self._store.clear()
         self._expiry.clear()
 
-    def keys(self) -> List[str]:
+    def keys(self) -> list[str]:
         """Get all non-expired keys."""
         self._cleanup_expired()
         return list(self._store.keys())

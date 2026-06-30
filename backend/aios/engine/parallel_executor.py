@@ -1,8 +1,10 @@
 """AIOS Parallel Executor - Concurrent task execution."""
 
-import structlog
 import asyncio
-from typing import Any, Callable, Dict, List, Optional
+from collections.abc import Callable
+from typing import Any
+
+import structlog
 
 logger = structlog.get_logger(__name__)
 
@@ -16,10 +18,10 @@ class ParallelExecutor:
 
     async def execute(
         self,
-        tasks: List[Callable],
+        tasks: list[Callable],
         *args: Any,
         **kwargs: Any,
-    ) -> List[Any]:
+    ) -> list[Any]:
         """Execute tasks concurrently.
 
         Args:
@@ -38,10 +40,10 @@ class ParallelExecutor:
 
     async def execute_with_results(
         self,
-        tasks: Dict[str, Callable],
+        tasks: dict[str, Callable],
         *args: Any,
         **kwargs: Any,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Execute named tasks concurrently.
 
         Args:

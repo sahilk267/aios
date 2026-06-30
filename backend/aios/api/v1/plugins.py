@@ -1,7 +1,7 @@
 """AIOS Plugin Endpoints."""
 
+
 import structlog
-from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query
 
 logger = structlog.get_logger(__name__)
@@ -16,8 +16,8 @@ _plugins: dict = {}
 async def list_plugins(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    plugin_type: Optional[str] = None,
-) -> List[dict]:
+    plugin_type: str | None = None,
+) -> list[dict]:
     """List all plugins."""
     plugins = list(_plugins.values())
     if plugin_type:
@@ -30,7 +30,7 @@ async def install_plugin(plugin: dict) -> dict:
     """Install a plugin."""
     import uuid
     from datetime import datetime
-    
+
     plugin_id = str(uuid.uuid4())
     plugin_data = {
         "id": plugin_id,

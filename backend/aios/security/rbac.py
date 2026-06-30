@@ -1,8 +1,8 @@
 """AIOS Role-Based Access Control (RBAC)."""
 
-import structlog
 from enum import Enum
-from typing import Dict, List, Set
+
+import structlog
 
 logger = structlog.get_logger(__name__)
 
@@ -25,7 +25,7 @@ class Permission(Enum):
 
 
 # Role-permission mappings
-ROLE_PERMISSIONS: Dict[Role, Set[Permission]] = {
+ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
     Role.ADMIN: {Permission.READ, Permission.WRITE, Permission.DELETE, Permission.EXECUTE, Permission.ADMIN},
     Role.DEVELOPER: {Permission.READ, Permission.WRITE, Permission.EXECUTE},
     Role.VIEWER: {Permission.READ},
@@ -37,7 +37,7 @@ class RBACManager:
     """Manages role-based access control."""
 
     def __init__(self):
-        self._user_roles: Dict[str, Role] = {}
+        self._user_roles: dict[str, Role] = {}
         self._logger = structlog.get_logger("aios.security.rbac")
 
     def assign_role(self, user_id: str, role: Role) -> None:

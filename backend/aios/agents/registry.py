@@ -4,10 +4,11 @@ This module provides the agent registry system that manages agent
 creation, discovery, and lifecycle.
 """
 
-import structlog
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Optional
 
-from aios.agents.base import BaseAgent, AgentContext, AgentResult, AgentStatus
+import structlog
+
+from aios.agents.base import AgentStatus, BaseAgent
 
 logger = structlog.get_logger(__name__)
 
@@ -20,8 +21,8 @@ class AgentRegistry:
     """
 
     _instance: Optional["AgentRegistry"] = None
-    _agent_classes: Dict[str, Type[BaseAgent]] = {}
-    _active_agents: Dict[str, BaseAgent] = {}
+    _agent_classes: dict[str, type[BaseAgent]] = {}
+    _active_agents: dict[str, BaseAgent] = {}
 
     def __new__(cls) -> "AgentRegistry":
         """Singleton pattern to ensure one global registry."""
@@ -30,7 +31,7 @@ class AgentRegistry:
         return cls._instance
 
     @classmethod
-    def register(cls, agent_class: Type[BaseAgent]) -> Type[BaseAgent]:
+    def register(cls, agent_class: type[BaseAgent]) -> type[BaseAgent]:
         """Decorator to register an agent class.
 
         Args:
@@ -45,7 +46,7 @@ class AgentRegistry:
         return agent_class
 
     @classmethod
-    def get_agent_class(cls, role: str) -> Optional[Type[BaseAgent]]:
+    def get_agent_class(cls, role: str) -> type[BaseAgent] | None:
         """Get the agent class for a given role.
 
         Args:
@@ -57,7 +58,7 @@ class AgentRegistry:
         return cls._agent_classes.get(role)
 
     @classmethod
-    def list_roles(cls) -> List[str]:
+    def list_roles(cls) -> list[str]:
         """List all registered agent roles.
 
         Returns:
@@ -66,7 +67,7 @@ class AgentRegistry:
         return list(cls._agent_classes.keys())
 
     @classmethod
-    def list_agents(cls) -> List[Dict[str, Any]]:
+    def list_agents(cls) -> list[dict[str, Any]]:
         """List all registered agent classes with metadata.
 
         Returns:
@@ -86,10 +87,10 @@ class AgentRegistry:
     def create_agent(
         cls,
         role: str,
-        name: Optional[str] = None,
+        name: str | None = None,
         provider: str = "ollama",
         model: str = "llama3",
-        config: Optional[Dict[str, Any]] = None,
+        config: dict[str, Any] | None = None,
     ) -> BaseAgent:
         """Create an agent instance for the given role.
 
@@ -131,7 +132,7 @@ class AgentRegistry:
         return agent
 
     @classmethod
-    def get_agent(cls, agent_id: str) -> Optional[BaseAgent]:
+    def get_agent(cls, agent_id: str) -> BaseAgent | None:
         """Get an active agent by ID.
 
         Args:
@@ -159,7 +160,7 @@ class AgentRegistry:
         return False
 
     @classmethod
-    def get_active_agents(cls) -> List[Dict[str, Any]]:
+    def get_active_agents(cls) -> list[dict[str, Any]]:
         """Get all active agents with their status.
 
         Returns:
@@ -168,7 +169,7 @@ class AgentRegistry:
         return [agent.to_dict() for agent in cls._active_agents.values()]
 
     @classmethod
-    def get_agents_by_status(cls, status: AgentStatus) -> List[BaseAgent]:
+    def get_agents_by_status(cls, status: AgentStatus) -> list[BaseAgent]:
         """Get all agents with a specific status.
 
         Args:
@@ -209,11 +210,11 @@ class AgentFactory:
 
     def __init__(self):
         self._registry = AgentRegistry()
-        self._role: Optional[str] = None
-        self._name: Optional[str] = None
+        self._role: str | None = None
+        self._name: str | None = None
         self._provider: str = "ollama"
         self._model: str = "llama3"
-        self._config: Dict[str, Any] = {}
+        self._config: dict[str, Any] = {}
 
     def with_role(self, role: str) -> "AgentFactory":
         """Set the agent role."""

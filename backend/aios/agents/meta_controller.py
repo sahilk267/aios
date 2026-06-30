@@ -8,12 +8,13 @@ It handles rollback automatically if any step fails.
 """
 
 import json
-import structlog
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from aios.agents.base import BaseAgent, AgentContext, AgentResult, AgentStatus
+import structlog
+
+from aios.agents.base import AgentContext, AgentResult, BaseAgent
 from aios.agents.registry import AgentRegistry
 
 logger = structlog.get_logger(__name__)
@@ -80,7 +81,7 @@ class MetaControllerAgent(BaseAgent):
                 self._update_project_state(next_task, "completed")
                 self._logger.info("Task completed successfully", task=next_task)
             else:
-                self._logger.warning("Task failed", task=next_taskipeline_result.get("error"))
+                self._logger.warning("Task failed", task=next_task)
 
             return AgentResult(
                 success=pipeline_result["success"],
@@ -89,10 +90,10 @@ class MetaControllerAgent(BaseAgent):
             )
 
         except Exception as e:
-            self._logger.error("Meta-Controller failed", error=str(e))
-            return AgentResult.failure(f"Meta-Controller failed: {str(e)}")
+            self._logger.exception("Meta-Controller failed", error=str(e))
+            return AgentResult.failure(f"Meta-Controller failed: {e!s}")
 
-    def _read_project_state(self) -> Optional[Dict[str, Any]]:
+    def _read_project_state(self) -> dict[str, Any] | None:
         """Read PROJECT_STATE.json."""
         state_path = PROJECT_ROOT / "PROJECT_STATE.json"
         if not state_path.exists():
@@ -102,10 +103,10 @@ class MetaControllerAgent(BaseAgent):
             with open(state_path) as f:
                 return json.load(f)
         except Exception as e:
-            self._logger.error("Failed to read PROJECT_STATE.json", error=str(e))
+            self._logger.exception("Failed to read PROJECT_STATE.json", error=str(e))
             return None
 
-    def _select_next_task(self, state: Dict[str, Any]) -> Optional[str]:
+    def _select_next_task(self, state: dict[str, Any]) -> str | None:
         """Select the next highest-priority pending task.
 
         Strategy:
@@ -139,7 +140,7 @@ class MetaControllerAgent(BaseAgent):
         self,
         task: str,
         context: AgentContext,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Execute the full pipeline for a task.
 
         Pipeline: Planner -> Architect -> Backend Engineer -> Reviewer -> QA
@@ -196,7 +197,7 @@ class MetaControllerAgent(BaseAgent):
                     return results
 
             except Exception as e:
-                results["error"] = f"Step '{step_name}' exception: {str(e)}"
+                results["error"] = f"Step '{step_name}' exception: {e!s}"
                 return results
 
         results["success"] = True
@@ -235,4 +236,4 @@ class MetaControllerAgent(BaseAgent):
             self._logger.info("Project state updated", task=task, status=status)
 
         except Exception as e:
-            self._logger.error("Failed to update PROJECT_STATE.json", error=str(e))
+            self._logger.exception("Failed to update PROJECT_STATE.json", error=str(e))

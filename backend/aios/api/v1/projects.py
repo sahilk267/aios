@@ -1,7 +1,7 @@
 """AIOS Project Endpoints."""
 
+
 import structlog
-from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query
 
 from aios.schemas.project import ProjectCreate, ProjectResponse, ProjectUpdate
@@ -14,11 +14,11 @@ router = APIRouter()
 _projects: dict = {}
 
 
-@router.get("", response_model=List[ProjectResponse])
+@router.get("", response_model=list[ProjectResponse])
 async def list_projects(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-) -> List[ProjectResponse]:
+) -> list[ProjectResponse]:
     """List all projects."""
     projects = list(_projects.values())
     return projects[skip : skip + limit]

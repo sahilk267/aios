@@ -1,6 +1,6 @@
 """AIOS Security Module."""
 
-from aios.security.audit import audit_logger, AuditLogger
-from aios.security.rbac import rbac_manager, RBACManager, Role, Permission
+from aios.security.audit import AuditLogger, audit_logger
+from aios.security.rbac import Permission, RBACManager, Role, rbac_manager
 
-__all__ = ["audit_logger", "AuditLogger", "rbac_manager", "RBACManager", "Role", "Permission"]
+__all__ = ["AuditLogger", "Permission", "RBACManager", "Role", "audit_logger", "rbac_manager"]

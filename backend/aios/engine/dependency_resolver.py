@@ -1,8 +1,8 @@
 """AIOS Dependency Resolver - DAG dependency resolution."""
 
-import structlog
-from typing import Any, Dict, List, Optional, Set
 from collections import deque
+
+import structlog
 
 logger = structlog.get_logger(__name__)
 
@@ -15,9 +15,9 @@ class DependencyResolver:
 
     def resolve(
         self,
-        tasks: List[str],
-        dependencies: Dict[str, List[str]],
-    ) -> List[str]:
+        tasks: list[str],
+        dependencies: dict[str, list[str]],
+    ) -> list[str]:
         """Resolve execution order using topological sort.
 
         Args:
@@ -30,8 +30,8 @@ class DependencyResolver:
         Raises:
             ValueError: If circular dependency detected.
         """
-        in_degree: Dict[str, int] = {task: 0 for task in tasks}
-        graph: Dict[str, List[str]] = {task: [] for task in tasks}
+        in_degree: dict[str, int] = dict.fromkeys(tasks, 0)
+        graph: dict[str, list[str]] = {task: [] for task in tasks}
 
         for task, deps in dependencies.items():
             if task not in in_degree:
@@ -59,10 +59,10 @@ class DependencyResolver:
 
     def get_ready_tasks(
         self,
-        tasks: List[str],
-        dependencies: Dict[str, List[str]],
-        completed: Set[str],
-    ) -> List[str]:
+        tasks: list[str],
+        dependencies: dict[str, list[str]],
+        completed: set[str],
+    ) -> list[str]:
         """Get tasks that are ready to execute.
 
         Args:
@@ -84,8 +84,8 @@ class DependencyResolver:
 
     def validate(
         self,
-        tasks: List[str],
-        dependencies: Dict[str, List[str]],
+        tasks: list[str],
+        dependencies: dict[str, list[str]],
     ) -> bool:
         """Validate that dependencies are consistent.
 

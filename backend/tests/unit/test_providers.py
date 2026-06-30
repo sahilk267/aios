@@ -1,14 +1,13 @@
 """Tests for provider system."""
 
 import pytest
+
 from aios.providers.base import (
-    BaseProvider,
     ProviderConfig,
     ProviderResponse,
-    ProviderStatus,
 )
 from aios.providers.ollama import OllamaProvider
-from aios.providers.openrouter import OpenRouterProvider, FREE_MODELS
+from aios.providers.openrouter import FREE_MODELS, OpenRouterProvider
 from aios.providers.registry import ProviderRegistry
 
 

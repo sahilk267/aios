@@ -1,9 +1,10 @@
 """AIOS Architect Agent - System design and architecture."""
 
-import structlog
-from typing import Any, Dict, List
+from typing import Any
 
-from aios.agents.base import BaseAgent, AgentContext, AgentResult
+import structlog
+
+from aios.agents.base import AgentContext, AgentResult, BaseAgent
 from aios.agents.registry import AgentRegistry
 
 logger = structlog.get_logger(__name__)
@@ -12,11 +13,11 @@ logger = structlog.get_logger(__name__)
 @AgentRegistry.register
 class ArchitectAgent(BaseAgent):
     """Agent responsible for system architecture and design.
-    
+
     The Architect agent creates system designs, selects technologies,
     and defines component interfaces.
     """
-    
+
     ROLE = "architect"
     DESCRIPTION = "Designs system architecture and selects technologies"
     CAPABILITIES = [
@@ -26,33 +27,33 @@ class ArchitectAgent(BaseAgent):
         "database_design",
         "component_modeling",
     ]
-    
+
     async def execute(self, context: AgentContext) -> AgentResult:
         """Execute architecture design task."""
         self._logger.info("Architect starting", task_id=context.task_id)
-        
+
         try:
             query = context.input_data.get("query", "")
             if not query:
                 return AgentResult.failure("No query provided for architecture")
-            
+
             # Create architecture design
             design = self._create_design(query, context)
-            
+
             context.add_artifact("architecture", design)
             context.add_memory("architecture", "Created system architecture design")
-            
+
             return AgentResult.success(
                 output=design,
                 artifacts={"architecture": design},
                 metrics={"components_designed": len(design["components"])},
             )
-            
+
         except Exception as e:
-            self._logger.error("Architect failed", error=str(e))
-            return AgentResult.failure(f"Architecture design failed: {str(e)}")
-    
-    def _create_design(self, query: str, context: AgentContext) -> Dict[str, Any]:
+            self._logger.exception("Architect failed", error=str(e))
+            return AgentResult.failure(f"Architecture design failed: {e!s}")
+
+    def _create_design(self, query: str, context: AgentContext) -> dict[str, Any]:
         """Create architecture design from query."""
         return {
             "query": query,

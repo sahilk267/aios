@@ -1,13 +1,14 @@
 """AIOS Custom Exceptions."""
 
-from typing import Any, Dict, Optional
+from typing import Any
+
 from fastapi import HTTPException, status
 
 
 class AIOSBaseException(Exception):
     """Base exception for AIOS."""
-    
-    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
+
+    def __init__(self, message: str, details: dict[str, Any] | None = None):
         self.message = message
         self.details = details or {}
         super().__init__(self.message)
@@ -15,48 +16,40 @@ class AIOSBaseException(Exception):
 
 class NotFoundException(AIOSBaseException):
     """Resource not found exception."""
-    pass
 
 
 class ValidationException(AIOSBaseException):
     """Validation error exception."""
-    pass
 
 
 class AuthenticationException(AIOSBaseException):
     """Authentication error exception."""
-    pass
 
 
 class AuthorizationException(AIOSBaseException):
     """Authorization error exception."""
-    pass
 
 
 class ProviderException(AIOSBaseException):
     """AI provider error exception."""
-    pass
 
 
 class WorkflowException(AIOSBaseException):
     """Workflow execution error exception."""
-    pass
 
 
 class AgentException(AIOSBaseException):
     """Agent execution error exception."""
-    pass
 
 
 class PluginException(AIOSBaseException):
     """Plugin error exception."""
-    pass
 
 
 def create_http_exception(
     status_code: int,
     message: str,
-    details: Optional[Dict[str, Any]] = None,
+    details: dict[str, Any] | None = None,
 ) -> HTTPException:
     """Create an HTTP exception with structured error response."""
     return HTTPException(
@@ -77,7 +70,7 @@ def not_found(resource: str, identifier: Any) -> HTTPException:
     )
 
 
-def validation_error(message: str, details: Optional[Dict[str, Any]] = None) -> HTTPException:
+def validation_error(message: str, details: dict[str, Any] | None = None) -> HTTPException:
     """Create a 422 Validation Error exception."""
     return create_http_exception(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

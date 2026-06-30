@@ -1,10 +1,10 @@
 """AIOS Memory Endpoints."""
 
+
 import structlog
-from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query
 
-from aios.schemas.memory import MemoryStore, MemorySearch, MemoryResponse
+from aios.schemas.memory import MemoryResponse, MemoryStore
 
 logger = structlog.get_logger(__name__)
 
@@ -14,12 +14,12 @@ router = APIRouter()
 _memories: dict = {}
 
 
-@router.get("/search", response_model=List[MemoryResponse])
+@router.get("/search", response_model=list[MemoryResponse])
 async def search_memory(
     query: str = Query(..., min_length=1),
     limit: int = Query(10, ge=1, le=100),
-    memory_type: Optional[str] = None,
-) -> List[MemoryResponse]:
+    memory_type: str | None = None,
+) -> list[MemoryResponse]:
     """Search memory with semantic search."""
     # Placeholder for semantic search
     results = []
