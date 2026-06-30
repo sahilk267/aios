@@ -1,5 +1,7 @@
 """Tests for security utilities."""
 
+from datetime import timedelta
+
 from aios.core.security import (
     create_access_token,
     decode_access_token,
@@ -55,8 +57,6 @@ class TestJWT:
 
     def test_token_expiration(self):
         """Test token expiration is set."""
-        from datetime import timedelta
-
         data = {"sub": "user123"}
         token = create_access_token(data, expires_delta=timedelta(hours=1))
         decoded = decode_access_token(token)

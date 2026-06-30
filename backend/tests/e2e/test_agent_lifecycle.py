@@ -1,12 +1,16 @@
+import asyncio
+
+import pytest
+
+from aios.agents.base import AgentContext, AgentStatus
+from aios.agents.registry import AgentRegistry
+from aios.engine.workflow_engine import WorkflowEngine, WorkflowStatus
+
 """End-to-end tests for agent lifecycle.
 
 Tests the complete workflow from planning through QA,
 including database and vector store updates.
 """
-
-import asyncio
-
-import pytest
 
 
 @pytest.mark.e2e
@@ -16,8 +20,6 @@ class TestAgentLifecycle:
     @pytest.mark.asyncio
     async def test_planner_agent_lifecycle(self):
         """Test planner agent full lifecycle."""
-        from aios.agents.base import AgentContext, AgentStatus
-        from aios.agents.registry import AgentRegistry
 
         registry = AgentRegistry()
         agent = registry.create_agent(role="planner", name="e2e-planner")
@@ -44,8 +46,6 @@ class TestAgentLifecycle:
     @pytest.mark.asyncio
     async def test_architect_agent_lifecycle(self):
         """Test architect agent full lifecycle."""
-        from aios.agents.base import AgentContext, AgentStatus
-        from aios.agents.registry import AgentRegistry
 
         registry = AgentRegistry()
         agent = registry.create_agent(role="architect", name="e2e-architect")
@@ -67,8 +67,6 @@ class TestAgentLifecycle:
     @pytest.mark.asyncio
     async def test_backend_engineer_lifecycle(self):
         """Test backend engineer agent lifecycle."""
-        from aios.agents.base import AgentContext, AgentStatus
-        from aios.agents.registry import AgentRegistry
 
         registry = AgentRegistry()
         agent = registry.create_agent(role="backend_engineer", name="e2e-backend")
@@ -90,8 +88,6 @@ class TestAgentLifecycle:
     @pytest.mark.asyncio
     async def test_reviewer_agent_lifecycle(self):
         """Test reviewer agent lifecycle."""
-        from aios.agents.base import AgentContext, AgentStatus
-        from aios.agents.registry import AgentRegistry
 
         registry = AgentRegistry()
         agent = registry.create_agent(role="reviewer", name="e2e-reviewer")
@@ -115,8 +111,6 @@ class TestAgentLifecycle:
     @pytest.mark.asyncio
     async def test_qa_agent_lifecycle(self):
         """Test QA agent lifecycle."""
-        from aios.agents.base import AgentContext, AgentStatus
-        from aios.agents.registry import AgentRegistry
 
         registry = AgentRegistry()
         agent = registry.create_agent(role="qa", name="e2e-qa")
@@ -138,7 +132,6 @@ class TestAgentLifecycle:
     @pytest.mark.asyncio
     async def test_full_workflow_pipeline(self):
         """Test complete workflow from planning to QA."""
-        from aios.engine.workflow_engine import WorkflowEngine, WorkflowStatus
 
         engine = WorkflowEngine()
 
@@ -199,7 +192,6 @@ class TestAgentLifecycle:
     @pytest.mark.asyncio
     async def test_workflow_with_failure(self):
         """Test workflow handles task failure gracefully."""
-        from aios.engine.workflow_engine import WorkflowEngine, WorkflowStatus
 
         engine = WorkflowEngine()
 
@@ -224,8 +216,6 @@ class TestAgentLifecycle:
     @pytest.mark.asyncio
     async def test_agent_metrics_tracking(self):
         """Test that agent metrics are tracked correctly."""
-        from aios.agents.base import AgentContext
-        from aios.agents.registry import AgentRegistry
 
         registry = AgentRegistry()
         agent = registry.create_agent(role="planner", name="metrics-test")
@@ -248,8 +238,6 @@ class TestAgentLifecycle:
     @pytest.mark.asyncio
     async def test_concurrent_agent_execution(self):
         """Test multiple agents can run concurrently."""
-        from aios.agents.base import AgentContext
-        from aios.agents.registry import AgentRegistry
 
         registry = AgentRegistry()
 
